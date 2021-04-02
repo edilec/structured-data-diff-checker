@@ -1,0 +1,17 @@
+{
+  "name": "structured-data-diff-checker",
+  "version": "0.0.0",
+  "description": "Compare JSON-LD graphs between releases and report changed entities.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edilec/structured-data-diff-checker"
+  }
+}
