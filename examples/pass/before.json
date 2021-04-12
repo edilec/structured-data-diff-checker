@@ -1,0 +1,1 @@
+{"@context":"https://example.test/context","@graph":[{"@id":"urn:example:item","@type":"Thing","name":"Synthetic example","related":{"@id":"urn:example:other"}}]}

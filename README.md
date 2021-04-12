@@ -1,25 +1,11 @@
 # Structured Data Diff Checker
 
-Compare JSON-LD graphs between releases and report changed entities.
+Compare two local, bounded JSON-LD graph exports by stable `@id`. It reports added/removed entities and changed types, scalar fields and `@id` relationships. Object-key and unordered-value order do not produce differences. The tool is offline, read-only, zero-dependency Node.js 22+.
 
-- **Repository:** [edilec/structured-data-diff-checker](https://github.com/edilec/structured-data-diff-checker)
-- **Area:** SEO & Search
-- **License:** MIT
+```sh
+node bin/structured-data-diff-checker.mjs --root examples/pass --before before.json --after after.json --contexts contexts.json
+node bin/structured-data-diff-checker.mjs --root examples/fail --before before.json --after after.json --contexts contexts.json
+npm run check
+```
 
-## Scope
-
-This repository is a focused Edilec engineering utility. Its implementation, tests, usage examples, release notes, and security guidance will be kept in this repository as the tool is built. It does not contain client work, production data, credentials, or copied source from another project.
-
-## Repository layout
-
-- `src/` — implementation
-- `test/` — deterministic tests and fixtures
-- `docs/` — design notes, limits, and usage guidance
-
-## Development
-
-The first implementation should document its input contract, output contract, limits, failure behavior, and verification command before a release is made.
-
-## License
-
-MIT. See [LICENSE](./LICENSE).
+The first example exits 0 and the second exits 1 with `entity-removed`. A remote context URI is used only if it has an explicit local mapping; it is never fetched. This implements the documented [controlled JSON-LD subset](docs/README.md), not full JSON-LD expansion. Unsupported constructs yield `incomplete` rather than a guessed diff. `src/index.mjs` exports `TOOL_ID` and `compareGraphs`.
