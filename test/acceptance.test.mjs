@@ -16,7 +16,7 @@ function run(before, after, contextMap = contexts) {
   try {
     writeFileSync(join(root, 'before.json'), JSON.stringify(before));
     writeFileSync(join(root, 'after.json'), JSON.stringify(after));
-    writeFileSync(join(root, 'contexts.json'), JSON.stringify(contextMap));
+    writeFileSync(join(root, 'contexts.json'), typeof contextMap === 'string' ? contextMap : JSON.stringify(contextMap));
     const out = spawnSync(process.execPath, [cli, '--root', root, '--before', 'before.json', '--after', 'after.json', '--contexts', 'contexts.json'], { encoding: 'utf8' });
     return { ...out, report: out.stdout ? JSON.parse(out.stdout) : null };
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -147,4 +147,42 @@ test('input byte boundary and strict UTF-8 fail closed', () => {
     assert.equal(invalid.status, 2);
     assert.ok(JSON.parse(invalid.stdout).findings.some(f => f.ruleId === 'input-unavailable'));
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+test('context-map bound accepts 100 mappings and refuses 101', () => {
+  const entries = Object.fromEntries(Array.from({ length: 99 }, (_, i) => [`https://example.test/extra${i}`, { '@vocab': 'https://example.test/vocab/' }]));
+  const map = { schemaVersion: '1', contexts: { ...contexts.contexts, ...entries } };
+  const a = graph(entity('urn:fixture:a'));
+  assert.equal(run(a, a, map).status, 0);
+  map.contexts['https://example.test/overflow'] = { '@vocab': 'https://example.test/vocab/' };
+  const over = run(a, a, map);
+  assert.equal(over.status, 2);
+  assert.equal(over.stdout, '');
+});
+test('term bound accepts 200 entries and refuses 201', () => {
+  const terms = Object.fromEntries(Array.from({ length: 199 }, (_, i) => [`t${i}`, `https://example.test/vocab/t${i}`]));
+  const map = { schemaVersion: '1', contexts: { 'https://example.test/context': { '@vocab': 'https://example.test/vocab/', ...terms } } };
+  const a = graph(entity('urn:fixture:a'));
+  assert.equal(run(a, a, map).status, 0);
+  map.contexts['https://example.test/context'].overflow = 'https://example.test/vocab/overflow';
+  const over = run(a, a, map);
+  assert.equal(over.status, 2);
+  assert.equal(over.stdout, '');
+});
+test('property-value bound accepts 1000 values and refuses 1001', () => {
+  const values = Array.from({ length: 1000 }, (_, i) => i);
+  const a = graph(entity('urn:fixture:a', { name: values }));
+  assert.equal(run(a, a).status, 0);
+  values.push(1000);
+  const over = run(a, a);
+  assert.equal(over.status, 2);
+  assert.ok(over.report.findings.some(f => f.ruleId === 'record-limit'));
+});
+test('context-file byte bound accepts 65536 and refuses 65537', () => {
+  const base = JSON.stringify(contexts);
+  const a = graph(entity('urn:fixture:a'));
+  const exact = base + ' '.repeat(65536 - Buffer.byteLength(base));
+  assert.equal(run(a, a, exact).status, 0);
+  const over = run(a, a, exact + ' ');
+  assert.equal(over.status, 2);
+  assert.equal(over.stdout, '');
 });
