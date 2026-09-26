@@ -1,0 +1,1 @@
+{"@graph":[{"related":{"@id":"urn:example:other"},"name":"Synthetic example","@type":"Thing","@id":"urn:example:item"}],"@context":"https://example.test/context"}
